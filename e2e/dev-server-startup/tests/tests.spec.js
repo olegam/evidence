@@ -13,7 +13,6 @@ describe("Dev Server Startup", () => {
 			FORCE_COLOR: '0'
 		} })
 
-		setInterval(() => console.log("Test is still running...."), 1000)
 		const done = new Promise((resolve) => {
 			proc.on('close', resolve)
 			proc.on('exit', resolve)
