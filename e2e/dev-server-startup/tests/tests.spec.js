@@ -24,7 +24,7 @@ it('Should be timed appropriately', { timeout: allowedTimeout * 10 }, async () =
 			FORCE_COLOR: ''
 		}
 	});
-	const procStartTime = performance.now()
+	const procStartTime = performance.now();
 
 	const exitCode = await new Promise((resolve, reject) => {
 		let running = false;
@@ -32,7 +32,7 @@ it('Should be timed appropriately', { timeout: allowedTimeout * 10 }, async () =
 		devServerProcess.on('error', reject);
 		devServerProcess.stderr.on('data', (data) => {
 			console.error(data.toString());
-		})
+		});
 
 		devServerProcess.stdout.on('data', async (data) => {
 			let message = data.toString();
@@ -48,23 +48,42 @@ it('Should be timed appropriately', { timeout: allowedTimeout * 10 }, async () =
 			if (!result) {
 				return;
 			}
+			const startupTime = parseInt(result[1]);
 			try {
-				const startupTime = parseInt(result[1]);
-				expect(startupTime, "Dev server startup time").toBeLessThan(goalStartupTime);
+				expect(startupTime, 'Dev server startup time').toBeLessThan(goalStartupTime);
 			} catch (e) {
 				reject(e);
 				return;
 			}
-			running = true
+			running = true;
 
-
-			const beforeBody = performance.now()
-			const body = await (await fetch("http://localhost:3000")).text();
-			const afterBody = performance.now()
+			const beforeBody = performance.now();
+			const body = await (await fetch('http://localhost:3000')).text();
+			const afterBody = performance.now();
 			try {
-				const firstRequestTime = afterBody - beforeBody
-				expect(firstRequestTime, "First request time").toBeLessThan(goalFirstRequestTime);
-				expect(afterBody - procStartTime, "Total startup time").toBeLessThan(allowedTimeout);
+				const firstRequestTime = afterBody - beforeBody;
+				console.table(
+					[
+						{
+							title: 'Dev Server Startup Time',
+							value: `${startupTime.toFixed(2)}ms`,
+							limit: `${goalStartupTime.toFixed(2)}ms`
+						},
+						{
+							title: 'First Request Time',
+							value: `${firstRequestTime.toFixed(2)}ms`,
+							limit: `${goalFirstRequestTime.toFixed(2)}ms`
+						},
+						{
+							title: 'Total Startup Time',
+							value: `${(afterBody - procStartTime).toFixed(2)}ms`,
+							limit: `${allowedTimeout.toFixed(2)}ms`
+						}
+					],
+					['title', 'value', 'limit']
+				);
+				expect(firstRequestTime, 'First request time').toBeLessThan(goalFirstRequestTime);
+				expect(afterBody - procStartTime, 'Total startup time').toBeLessThan(allowedTimeout);
 			} catch (e) {
 				reject(e);
 			} finally {

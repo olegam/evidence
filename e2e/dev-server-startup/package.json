@@ -17,9 +17,9 @@
   },
   "type": "module",
   "dependencies": {
-    "@evidence-dev/core-components": "4.7.8",
-    "@evidence-dev/duckdb": "1.0.11",
-    "@evidence-dev/evidence": "39.1.5",
+    "@evidence-dev/core-components": "workspace:*",
+    "@evidence-dev/duckdb": "workspace:*",
+    "@evidence-dev/evidence": "workspace:*",
     "vitest": "^2.1.8"
   },
   "overrides": {
@@ -32,12 +32,5 @@
   "devDependencies": {
     "@types/node": "^22.10.6",
     "cross-env": "^7.0.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "@evidence-dev/core-components": "npm:@evidence-dev/core-components@4.7.8",
-      "@evidence-dev/duckdb": "npm:@evidence-dev/duckdb@1.0.11",
-      "@evidence-dev/evidence": "npm:@evidence-dev/evidence@39.1.5"
-    } 
   }
 }
