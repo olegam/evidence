@@ -12,9 +12,9 @@ describe('Dev Server Startup', () => {
 	it('Should start the dev server', { timeout: allowedTimeout }, async () => {
 		const proc = child_process.spawn('npm', ['run', 'dev'], {
 			stdio: 'pipe',
+			shell: true,
 			env: {
 				...process.env,
-				shell: true,
 				FORCE_COLOR: ''
 			}
 		});
