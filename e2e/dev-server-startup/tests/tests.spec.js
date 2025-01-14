@@ -14,6 +14,7 @@ describe('Dev Server Startup', () => {
 			stdio: 'pipe',
 			env: {
 				...process.env,
+				shell: true,
 				FORCE_COLOR: ''
 			}
 		});
@@ -32,6 +33,7 @@ describe('Dev Server Startup', () => {
 				let message = data.toString();
 
 				// remove any colors from message
+				// @eslint-disable-next-line
 				const colorRegex = /\x1b\[[0-9;]*m/g;
 				message = message.replace(colorRegex, '');
 
@@ -51,7 +53,6 @@ describe('Dev Server Startup', () => {
 						cleanup();
 					}
 					console.log('End state reached');
-					
 				}
 			};
 			const onStderrData = (data) => {
@@ -60,9 +61,14 @@ describe('Dev Server Startup', () => {
 				// remove any colors from message
 				const colorRegex = /\x1b\[[0-9;]*m/g;
 				message = message.replace(colorRegex, '');
+				if (err.includes("error while starting dev server"))  {
+					cleanup();
+					reject(new Error(message));
+					return;
+				}
 
 				console.error(message);
-			}
+			};
 			const onError = (err) => {
 				console.error(err);
 				cleanup();
