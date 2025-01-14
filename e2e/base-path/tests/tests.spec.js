@@ -99,7 +99,7 @@ test.describe('Page', () => {
 		await waitForPageToLoad(page);
 
 		await expect(page.getByText('Welcome to Evidence', { exact: true })).toBeVisible();
-		
+
 		await page.waitForURL(`${basePath}/`);
 
 		const pageBSidebarLink = await sidebar.getByRole('link', { name: 'Page B' });

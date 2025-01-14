@@ -1,37 +1,66 @@
-import {describe, it, expect} from 'vitest';
-import child_process from "child_process";
+import { describe, it, expect } from 'vitest';
+import child_process from 'child_process';
 
-const allowedTimeout = process.env.GITHUB_ACTIONS ? 1000 * 60 * 10 /* 10 minutes */ : 5000
+const allowedTimeout = process.env.GITHUB_ACTIONS ? 1000 * 30 /* 30 seconds */ : 15000;
+const goalStartupTime = allowedTimeout * 2/3
 
 if (process.env.GITHUB_ACTIONS) {
-	console.log("Running on GitHub Actions")
+	console.log('Running on GitHub Actions');
 }
 
-describe("Dev Server Startup", () => {
-	it("Should start the dev server", { timeout: allowedTimeout }, async () => {
-		const proc = child_process.spawn('npm', ['run', 'dev'], { stdio: 'pipe', env: {
-			FORCE_COLOR: '0'
-		} })
-
-		const done = new Promise((resolve) => {
-			proc.on('close', resolve)
-			proc.on('exit', resolve)
-		})
-
-		proc.stdout.on('data', (data) => {
-			const message = data.toString()
-			console.log(message)
-			
-			const regex = /VITE v[0-9]+\.[0-9]+\.[0-9]+\s+ready in [\d]+ ms/g
-			
-			if (regex.exec(message)) {
-				proc.kill()
-				expect(true).toBe(true)
-				console.log("End state reached")
+describe('Dev Server Startup', () => {
+	it('Should start the dev server', { timeout: allowedTimeout }, async () => {
+		const proc = child_process.spawn('npm', ['run', 'dev'], {
+			stdio: 'pipe',
+			env: {
+				...process.env,
+				FORCE_COLOR: ''
 			}
-		})
+		});
 
-		await done
+		console.log('Starting dev server');
+		
+
+		const done = new Promise((resolve, reject) => {
+			proc.on('close', resolve);
+			proc.on('exit', resolve);
+
+			proc.stdout.on('data', (data) => {
+				let message = data.toString();
+				
+				// remove any colors from message
+				const colorRegex = /\x1b\[[0-9;]*m/g;
+				message = message.replace(colorRegex, '');
+	
+				console.log(message);
+	
+				const regex = /VITE v[0-9]+\.[0-9]+\.[0-9]+\s+ready in ([\d]+) ms/g;
+				const result = regex.exec(message)
+				if (result) {
+					const startupTime = parseInt(result[1]);
+					proc.kill();
+					try {
+						expect(startupTime).toBeLessThan(goalStartupTime);
+					} catch (e) {
+						reject(e);
+					}
+					console.log('End state reached');
+				}
+			});
+
+		});
+		proc.stderr.on('data', (data) => {
+			const message = data.toString();
+			console.error(message);
+		});
+
+
+
+		proc.on('error', (err) => {
+			console.error(err);
+		});
+
+		await done;
 		// dev server should start within 5 seconds
-	})
-})
+	});
+});
