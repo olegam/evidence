@@ -44,12 +44,14 @@ describe('Dev Server Startup', () => {
 					proc.kill();
 					try {
 						expect(startupTime).toBeLessThan(goalStartupTime);
+						resolve();
 					} catch (e) {
 						reject(e);
 					} finally {
 						cleanup();
 					}
 					console.log('End state reached');
+					
 				}
 			};
 			const onStderrData = (data) => {
