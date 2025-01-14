@@ -50,7 +50,7 @@ it('Should be timed appropriately', { timeout: allowedTimeout * 10 }, async () =
 			}
 			try {
 				const startupTime = parseInt(result[1]);
-				expect(startupTime).toBeLessThan(goalStartupTime);
+				expect(startupTime, "Dev server startup time").toBeLessThan(goalStartupTime);
 			} catch (e) {
 				reject(e);
 				return;
@@ -63,8 +63,8 @@ it('Should be timed appropriately', { timeout: allowedTimeout * 10 }, async () =
 			const afterBody = performance.now()
 			try {
 				const firstRequestTime = afterBody - beforeBody
-				expect(firstRequestTime).toBeLessThan(goalFirstRequestTime);
-				expect(afterBody - procStartTime).toBeLessThan(allowedTimeout);
+				expect(firstRequestTime, "First request time").toBeLessThan(goalFirstRequestTime);
+				expect(afterBody - procStartTime, "Total startup time").toBeLessThan(allowedTimeout);
 			} catch (e) {
 				reject(e);
 			} finally {
