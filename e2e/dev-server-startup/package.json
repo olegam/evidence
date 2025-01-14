@@ -7,7 +7,7 @@
     "dev": "evidence dev --open /",
     "sources": "evidence sources",
     "preview": "evidence preview",
-    "test:preview": "",
+    "test:preview": "exit 0",
     "test:dev": "vitest --run",
     "test:watch": "vitest"
   },
