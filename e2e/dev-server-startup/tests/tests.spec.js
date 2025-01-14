@@ -61,7 +61,7 @@ describe('Dev Server Startup', () => {
 				// remove any colors from message
 				const colorRegex = /\x1b\[[0-9;]*m/g;
 				message = message.replace(colorRegex, '');
-				if (err.includes("error while starting dev server"))  {
+				if (message.includes("error while starting dev server"))  {
 					cleanup();
 					reject(new Error(message));
 					return;
