@@ -82,7 +82,10 @@ describe('Dev Server Startup', () => {
 			proc.stderr.on('data', onStderrData);
 		});
 
-		await done;
+		const exitCode = await done;
+		if (typeof exitCode === 'number') {
+			expect(exitCode).toBe(0);
+		}
 		// dev server should start within 5 seconds
 	});
 });
