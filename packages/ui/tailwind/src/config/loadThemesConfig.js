@@ -5,6 +5,7 @@ import { applyThemeDefaults } from '../themes/index.js';
 
 /** @returns {import('../schemas/types.js').ThemesConfig} */
 export const loadThemesConfig = () => {
+	console.log(performance.now().toFixed(2), '💣 loadThemesConfig()');
 	/** @type {import('../schemas/types.js').ThemesConfigFile} */
 	let config = {};
 	try {

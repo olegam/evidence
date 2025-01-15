@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         # project: ${{ fromJson(needs.find-e2e-test-projects.outputs.e2e-test-projects) }}
-        project: ["dev-server-startup"]
+        project: ['dev-server-startup']
         os: [ubuntu-latest, macOS-latest, windows-latest]
         node-version: [18.13.0, 20, 22]
 

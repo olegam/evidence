@@ -2,6 +2,8 @@
 title: Welcome to Evidence
 ---
 
+{console.log("🚠["+($page.url.searchParams.get("tag") ?? "untagged")+"] "+($page.url.searchParams.get('dummy') === 'true' ? "[🤡]" : "")+" index.md [" + (performance.now().toFixed(0) ?? "") + "]")}
+
 <Details title='How to edit this page'>
 
 This page can be found in your project at `/pages/index.md`. Make a change to the markdown file and save it to see the change take effect in your browser.

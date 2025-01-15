@@ -15,7 +15,9 @@ if (process.env.GITHUB_ACTIONS) {
 // 	await new Promise((r) => setTimeout(r, 1000));
 // });
 
-it('Should be timed appropriately', { timeout: allowedTimeout * 10 }, async () => {
+it('Should be timed appropriately', { timeout: allowedTimeout * 100 }, async () => {
+	await fs.rm(`./.evidence/template/.evidence-queries`, { recursive: true, force: true });
+
 	const devServerProcess = child_process.spawn('npm', ['run', 'dev'], {
 		stdio: 'pipe',
 		shell: true,
@@ -26,18 +28,22 @@ it('Should be timed appropriately', { timeout: allowedTimeout * 10 }, async () =
 	});
 	const procStartTime = performance.now();
 
+	await fs.rm(`test.log`, { force: true })
+
 	const exitCode = await new Promise((resolve, reject) => {
 		let running = false;
 		devServerProcess.on('exit', resolve);
 		devServerProcess.on('error', reject);
-		devServerProcess.stderr.on('data', (data) => {
+		devServerProcess.stderr.on('data', async (data) => {
+			await fs.appendFile(`test.log`, '[ERR]||'+data.toString());
 			console.error(data.toString());
 		});
 
 		devServerProcess.stdout.on('data', async (data) => {
 			let message = data.toString();
-			if (running) return; // ignore everything once we have confirmed server start
 			console.log(message);
+			await fs.appendFile(`test.log`, message);
+			if (running) return; // ignore everything once we have confirmed server start
 			// remove any colors from message
 			// @eslint-disable-next-line
 			const colorRegex = /\x1b\[[0-9;]*m/g;
@@ -57,11 +63,23 @@ it('Should be timed appropriately', { timeout: allowedTimeout * 10 }, async () =
 			}
 			running = true;
 
+			// When this timeout is inserted, the test passes and the request finishes in <500ms
+			// What is different between our "ghost" request, and the test request?
+			// await new Promise((r) => setTimeout(r, 20000));
+			await fs.rm(`./.evidence/template/.evidence-queries`, { recursive: true, force: true });
 			const beforeBody = performance.now();
-			const body = await (await fetch('http://localhost:3000')).text();
+			const body = await (
+				await fetch('http://localhost:3000?tag=the-real-request', {
+					headers: {
+						'User-Agent': 'Birds ARE real :)'
+					}
+				})
+			).text();
 			const afterBody = performance.now();
+			console.log(`💣 Fetch Finished`);
 			try {
 				const firstRequestTime = afterBody - beforeBody;
+				const totalStartupTime = startupTime + firstRequestTime;
 				console.table(
 					[
 						{
@@ -76,14 +94,14 @@ it('Should be timed appropriately', { timeout: allowedTimeout * 10 }, async () =
 						},
 						{
 							title: 'Total Startup Time',
-							value: `${(afterBody - procStartTime).toFixed(2)}ms`,
+							value: `${(totalStartupTime).toFixed(2)}ms`,
 							limit: `${allowedTimeout.toFixed(2)}ms`
 						}
 					],
 					['title', 'value', 'limit']
 				);
 				expect(firstRequestTime, 'First request time').toBeLessThan(goalFirstRequestTime);
-				expect(afterBody - procStartTime, 'Total startup time').toBeLessThan(allowedTimeout);
+				expect(totalStartupTime, 'Total startup time').toBeLessThan(allowedTimeout);
 			} catch (e) {
 				reject(e);
 			} finally {

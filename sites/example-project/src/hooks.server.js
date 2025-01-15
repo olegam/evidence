@@ -1,6 +1,5 @@
 import { dev } from '$app/environment';
 import { log } from '@evidence-dev/sdk/logger';
-
 /** @param {Error | unknown} e  */
 const transformError = (e) => {
 	if (!(e instanceof Error)) {
@@ -18,6 +17,7 @@ const transformError = (e) => {
 
 /** @type {import("@sveltejs/kit").HandleClientError } */
 export const handleError = (e) => {
+	console.log(`>>>`, e)
 	log.error(`${e.message} | ${e.event.route.id ?? ''}`, {
 		url: e.event.url.href,
 		status: e.status
@@ -37,6 +37,11 @@ export function handle({ event, resolve }) {
 		}
 	}, 250);`
 		: '';
+
+	console.log(
+		performance.now().toFixed(2),
+		`💣 hooks.server.js // ${event.url.toString()} // SUB: ${event.isSubRequest} DATA: ${event.isDataRequest} // ${event.request.headers.get('User-Agent')}`
+	);
 
 	return resolve(event, { transformPageChunk: ({ html }) => html.replace('/*loading*/', loading) });
 }

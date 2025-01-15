@@ -85,6 +85,19 @@ const dummy_pages = new Map();
 
 /** @satisfies {import("./$types").LayoutLoad} */
 export const load = async ({ fetch, route, params, url }) => {
+
+	const loadStartTime = performance.now().toFixed(2);
+	const tag = url.searchParams.get('tag') || 'untagged'
+	const dummyUrl = new URL(url);
+	dummyUrl.searchParams.set('dummy', 'true');
+	dummyUrl.searchParams.set('tag', tag + '_child');
+	
+	const LOG_PREFIX = `🚠[${tag}] load()`
+	console.time(`${LOG_PREFIX}`);
+	console.log(`${LOG_PREFIX} [${performance.now().toFixed(0)}]`);
+
+	console.time(`${LOG_PREFIX} Fetch`);
+	console.log(`${LOG_PREFIX} [${performance.now().toFixed(0)}] Fetch`);
 	const [{ customFormattingSettings }, pagesManifest, evidencemeta] = await Promise.all([
 		fetch(addBasePath('/api/customFormattingSettings.json/GET.json')).then((x) => x.json()),
 		fetch(addBasePath('/api/pagesManifest.json')).then((x) => x.json()),
@@ -92,7 +105,10 @@ export const load = async ({ fetch, route, params, url }) => {
 			.then((x) => x.json())
 			.catch(() => ({ queries: [] }))
 	]);
+	console.timeEnd(`${LOG_PREFIX} Fetch`);
 
+	console.time(`${LOG_PREFIX} Dummy Pages`);
+	console.log(`${LOG_PREFIX} [${performance.now().toFixed(0)}] Dummy Pages`);
 	const routeHash = md5(route.id);
 	const paramsHash = md5(
 		Object.entries(params)
@@ -116,17 +132,34 @@ export const load = async ({ fetch, route, params, url }) => {
 	const is_dummy_page = dummy_pages.has(url.pathname);
 	if ((dev || building) && !browser && !is_dummy_page) {
 		dummy_pages.set(url.pathname, { inputs });
-		await fetch(url);
+		console.time(`${LOG_PREFIX} Dummy Page Fetch`);
+		console.log(`${LOG_PREFIX} [${performance.now().toFixed(0)}] Dummy Page Fetch`);
+		await fetch(dummyUrl);
+		console.timeEnd(`${LOG_PREFIX} Dummy Page Fetch`);
 		dummy_pages.delete(url.pathname);
 	}
+	console.timeEnd(`${LOG_PREFIX} Dummy Pages`);
 
-	if (!browser) await database_initialization;
+	if (!browser) {
+		console.time(`${LOG_PREFIX} Database Initialization`);
+		console.log(`${LOG_PREFIX} [${performance.now().toFixed(0)}] Database Initialization`);
+		await database_initialization;
+		console.timeEnd(`${LOG_PREFIX} Database Initialization`);
+	}
 	// account for potential changes in manifest (source query hmr)
-	if (!browser && dev) await initDB();
+	if (!browser && dev) {
+		console.time(`${LOG_PREFIX} initDB()`);
+		console.log(`${LOG_PREFIX} [${performance.now().toFixed(0)}] initDB()`);
+		await initDB();
+		console.timeEnd(`${LOG_PREFIX} initDB()`);
+	}
 
 	// let SSR saturate the cache first
 	if (browser && isUserPage && prerender) {
+		console.time(`${LOG_PREFIX} prerendered queries`);
+		console.log(`${LOG_PREFIX} [${performance.now().toFixed(0)}] prerendered queries`);
 		data = await getPrerenderedQueries(routeHash, paramsHash, fetch);
+		console.timeEnd(`${LOG_PREFIX} prerendered queries`);
 	}
 
 	/** @type {App.PageData["__db"]["query"]} */
@@ -149,6 +182,23 @@ export const load = async ({ fetch, route, params, url }) => {
 		);
 	}
 
+	const timedQuery = (...args) => {
+		console.time(`${LOG_PREFIX} query()`);
+		console.log(`${LOG_PREFIX} [${performance.now().toFixed(0)}] query()`);
+		try {
+			const res = query(...args);
+			if (res instanceof Promise) {
+				return res.finally(() => console.timeEnd(`${LOG_PREFIX} query()`));
+			} else {
+				return res;
+			}
+		} finally {
+			console.timeEnd(`${LOG_PREFIX} query()`);
+		}
+	};
+
+	console.time(`${LOG_PREFIX} breadcrumbs`);
+	console.log(`${LOG_PREFIX} [${performance.now().toFixed(0)}] breadcrumbs`);
 	let tree = pagesManifest;
 	for (const part of (route.id ?? '').split('/').slice(1)) {
 		tree = tree.children[part];
@@ -160,13 +210,14 @@ export const load = async ({ fetch, route, params, url }) => {
 			for (const [param, value] of Object.entries(params)) {
 				breadcrumb = breadcrumb.replaceAll(`\${params.${param}}`, value);
 			}
-			tree.title = (await query(breadcrumb))[0]?.breadcrumb;
+			tree.title = (await timedQuery(breadcrumb))[0]?.breadcrumb;
 		}
 	}
-
+	console.timeEnd(`${LOG_PREFIX} breadcrumbs`);
+	console.timeEnd(`${LOG_PREFIX}`);
 	return /** @type {App.PageData} */ ({
 		__db: {
-			query,
+			query: timedQuery,
 			async load() {
 				return database_initialization;
 			},
