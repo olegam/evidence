@@ -65,7 +65,7 @@ it('Should be timed appropriately', { timeout: allowedTimeout * 100 }, async () 
 
 			// When this timeout is inserted, the test passes and the request finishes in <500ms
 			// What is different between our "ghost" request, and the test request?
-			// await new Promise((r) => setTimeout(r, 20000));
+			await new Promise((r) => setTimeout(r, 20000));
 			await fs.rm(`./.evidence/template/.evidence-queries`, { recursive: true, force: true });
 			const beforeBody = performance.now();
 			const body = await (
